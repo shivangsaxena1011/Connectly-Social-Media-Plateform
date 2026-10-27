@@ -302,6 +302,46 @@ Destroying test database for alias 'default'...
 
 ---
 
+## ☁️ Deployment Guide
+
+Connectly is pre-configured with `gunicorn`, `whitenoise`, and `dj-database-url` for instant production deployment:
+
+### Option 1: Render (Recommended — Free / Zero-Config)
+1. Fork or push your code to your GitHub account: `https://github.com/shivangsaxena1011/Connectly-Social-Media-Plateform`.
+2. Go to [Render Dashboard](https://dashboard.render.com/) and click **New + > Web Service**.
+3. Connect your GitHub repository: `Connectly-Social-Media-Plateform`.
+4. Configure settings:
+   - **Environment:** `Python 3`
+   - **Build Command:** `./build.sh`
+   - **Start Command:** `gunicorn connectly.wsgi:application`
+5. Under **Advanced > Add Environment Variable**:
+   - `DJANGO_DEBUG` = `False`
+   - `DJANGO_SECRET_KEY` = `<click Generate>`
+   - `PYTHON_VERSION` = `3.12.0`
+6. Click **Create Web Service**. Render will automatically run the build script, collect static files, apply migrations, seed demo accounts, and launch your live site!
+
+### Option 2: Railway
+1. Go to [Railway.app](https://railway.app/) and create a **New Project**.
+2. Select **Deploy from GitHub repo** and pick `Connectly-Social-Media-Plateform`.
+3. Add a **PostgreSQL Database** service to the project. Railway automatically exposes `DATABASE_URL`, which Connectly automatically binds to!
+4. Under project settings, set `DJANGO_DEBUG` = `False`.
+5. Railway uses the included `Procfile` to start the app automatically.
+
+### Option 3: PythonAnywhere
+1. Create a free account at [PythonAnywhere.com](https://www.pythonanywhere.com/).
+2. Open a **Bash Console** and clone the repository:
+   ```bash
+   git clone https://github.com/shivangsaxena1011/Connectly-Social-Media-Plateform.git
+   ```
+3. Set up a virtual environment and install `requirements.txt`.
+4. In the **Web** tab:
+   - Point the Source Code directory to the project folder.
+   - Set up the WSGI file to load `connectly.wsgi`.
+   - Map `/static/` to `c:/.../staticfiles/` and `/media/` to `c:/.../media/`.
+5. Reload the web app.
+
+---
+
 ## 📚 Documentation Index
 
 - [Product Requirements Document (PRD)](docs/PRD.md)
