@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponseForbidden
 from django.views.decorators.http import require_POST
-from django.db.models import Q, Count
+from django.db.models import Q, Count, Prefetch
 from django.core.paginator import Paginator
 
 from .models import Profile, Post, Comment, Like, Follow, Notification
@@ -87,13 +87,18 @@ def feed_view(request):
     feed_filter = request.GET.get('tab', 'for_you')
     user = request.user
 
+    active_comments_prefetch = Prefetch(
+        'comments',
+        queryset=Comment.objects.filter(is_deleted=False).select_related('user', 'user__profile')
+    )
+
     if feed_filter == 'following':
         following_ids = user.following.values_list('following_id', flat=True)
         posts_qs = Post.objects.filter(
             Q(user_id__in=following_ids) | Q(user=user)
-        ).select_related('user', 'user__profile').prefetch_related('likes', 'comments')
+        ).select_related('user', 'user__profile').prefetch_related('likes', active_comments_prefetch)
     else:
-        posts_qs = Post.objects.all().select_related('user', 'user__profile').prefetch_related('likes', 'comments')
+        posts_qs = Post.objects.all().select_related('user', 'user__profile').prefetch_related('likes', active_comments_prefetch)
 
     # Paginate posts (10 per page)
     paginator = Paginator(posts_qs, 10)
@@ -310,7 +315,10 @@ def follow_toggle_view(request, username):
         })
 
     messages.info(request, f"You {action} @{target_user.username}.")
-    return redirect(request.META.get('HTTP_REFERER', 'profile'), username=username)
+    referer = request.META.get('HTTP_REFERER')
+    if referer:
+        return redirect(referer)
+    return redirect('profile', username=username)
 
 
 # ==========================================
@@ -332,6 +340,10 @@ def post_create_view(request):
             return redirect('home')
         else:
             messages.error(request, "Please provide valid post content.")
+            referer = request.META.get('HTTP_REFERER')
+            if referer:
+                return redirect(referer)
+            return redirect('home')
     else:
         form = PostForm()
 
@@ -429,7 +441,10 @@ def like_toggle_view(request, pk):
             'post_id': pk
         })
 
-    return redirect(request.META.get('HTTP_REFERER', 'home'))
+    referer = request.META.get('HTTP_REFERER')
+    if referer:
+        return redirect(referer)
+    return redirect('home')
 
 
 @login_required
@@ -464,7 +479,10 @@ def comment_add_view(request, pk):
     else:
         messages.error(request, "Comment content cannot be empty.")
 
-    return redirect(request.META.get('HTTP_REFERER', 'post_detail'), pk=pk)
+    referer = request.META.get('HTTP_REFERER')
+    if referer:
+        return redirect(referer)
+    return redirect('post_detail', pk=pk)
 
 
 @login_required
@@ -488,7 +506,10 @@ def comment_delete_view(request, pk):
         })
 
     messages.success(request, "Comment removed.")
-    return redirect(request.META.get('HTTP_REFERER', 'post_detail'), pk=comment.post.pk)
+    referer = request.META.get('HTTP_REFERER')
+    if referer:
+        return redirect(referer)
+    return redirect('post_detail', pk=comment.post.pk)
 
 
 # ==========================================

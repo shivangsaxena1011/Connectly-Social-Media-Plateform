@@ -100,11 +100,9 @@
                                 <span class="material-symbols-outlined text-2xl" style="{% if request.resolver_match.url_name == 'notifications' %}font-variation-settings: 'FILL' 1;{% endif %}">notifications</span>
                                 <span>Notifications</span>
                             </div>
-                            {% with unread=user.notifications.filter.count %}
-                            {% if unread > 0 %}
-                            <span class="w-5 h-5 rounded-full bg-pink-500 text-white text-[11px] font-bold flex items-center justify-center">{{ unread }}</span>
+                            {% if user.profile.unread_notifications_count > 0 %}
+                            <span class="w-5 h-5 rounded-full bg-pink-500 text-white text-[11px] font-bold flex items-center justify-center">{{ user.profile.unread_notifications_count }}</span>
                             {% endif %}
-                            {% endwith %}
                         </a>
 
                         <a href="{% url 'profile' username=user.username %}" class="flex items-center gap-4 px-4 py-3 rounded-2xl transition {% if request.resolver_match.url_name == 'profile' and request.resolver_match.kwargs.username == user.username %}bg-[#eef2ff] text-[#4648d4] font-semibold{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
@@ -163,6 +161,9 @@
             </button>
             <a href="{% url 'notifications' %}" class="flex flex-col items-center py-1 text-slate-600 hover:text-[#4648d4] relative {% if request.resolver_match.url_name == 'notifications' %}text-[#4648d4]{% endif %}">
                 <span class="material-symbols-outlined text-2xl" style="{% if request.resolver_match.url_name == 'notifications' %}font-variation-settings: 'FILL' 1;{% endif %}">notifications</span>
+                {% if user.profile.unread_notifications_count > 0 %}
+                <span class="absolute top-1 right-2 w-2 h-2 rounded-full bg-pink-500"></span>
+                {% endif %}
                 <span class="text-[10px] font-medium mt-0.5">Alerts</span>
             </a>
             <a href="{% url 'profile' username=user.username %}" class="flex flex-col items-center py-1 text-slate-600 hover:text-[#4648d4] {% if request.resolver_match.url_name == 'profile' and request.resolver_match.kwargs.username == user.username %}text-[#4648d4]{% endif %}">

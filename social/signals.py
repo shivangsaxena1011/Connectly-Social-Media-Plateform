@@ -22,11 +22,12 @@ def notify_on_like(sender, instance, created, **kwargs):
     Notifies the post owner when a user likes their post.
     """
     if created and instance.user != instance.post.user:
-        Notification.objects.create(
+        Notification.objects.get_or_create(
             recipient=instance.post.user,
             sender=instance.user,
             notification_type='like',
-            post=instance.post
+            post=instance.post,
+            is_read=False
         )
 
 
@@ -50,8 +51,9 @@ def notify_on_follow(sender, instance, created, **kwargs):
     Notifies the target user when a new follower follows them.
     """
     if created:
-        Notification.objects.create(
+        Notification.objects.get_or_create(
             recipient=instance.following,
             sender=instance.follower,
-            notification_type='follow'
+            notification_type='follow',
+            is_read=False
         )

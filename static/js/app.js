@@ -103,17 +103,20 @@ function toggleFollow(username, btnElement) {
     .then(data => {
         if (data.success) {
             const textEl = btnElement.querySelector('.follow-text') || btnElement;
+            const iconEl = btnElement.querySelector('.material-symbols-outlined');
             const countEl = document.getElementById(`followers-count-${username}`) || document.getElementById('profile-followers-count');
 
             if (countEl) countEl.textContent = data.followers_count;
 
             if (data.is_following) {
                 textEl.textContent = 'Following';
+                if (iconEl) iconEl.textContent = 'check';
                 btnElement.classList.remove('bg-[#4648d4]', 'text-white', 'hover:bg-indigo-700');
                 btnElement.classList.add('bg-slate-100', 'text-slate-700', 'hover:bg-slate-200');
                 showToast(`You are now following @${username}`);
             } else {
                 textEl.textContent = 'Follow';
+                if (iconEl) iconEl.textContent = 'person_add';
                 btnElement.classList.remove('bg-slate-100', 'text-slate-700', 'hover:bg-slate-200');
                 btnElement.classList.add('bg-[#4648d4]', 'text-white', 'hover:bg-indigo-700');
                 showToast(`Unfollowed @${username}`, 'info');

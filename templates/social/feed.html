@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load humanize %}
+{% load social_tags %}
 
 {% block title %}Feed - Connectly{% endblock %}
 
@@ -121,8 +122,8 @@
                     <div class="flex items-center gap-6">
                         <!-- Like Button -->
                         <button type="button" onclick="toggleLike({{ post.id }}, this)" class="like-btn flex items-center gap-2 text-sm font-semibold transition group">
-                            <span class="like-icon material-symbols-outlined text-xl transition {% if post.likes.all|length > 0 %}{% for l in post.likes.all %}{% if l.user == user %}text-rose-500{% endif %}{% endfor %}{% else %}text-slate-500 group-hover:text-rose-500{% endif %}"
-                                  style="{% for l in post.likes.all %}{% if l.user == user %}font-variation-settings: 'FILL' 1;{% endif %}{% endfor %}">favorite</span>
+                            <span class="like-icon material-symbols-outlined text-xl transition {% if post|is_liked_by:user %}text-rose-500{% else %}text-slate-500 group-hover:text-rose-500{% endif %}"
+                                  style="{% if post|is_liked_by:user %}font-variation-settings: 'FILL' 1;{% endif %}">favorite</span>
                             <span class="like-count text-slate-600 group-hover:text-slate-900">{{ post.likes_count }}</span>
                         </button>
 
@@ -145,7 +146,7 @@
 
                 <!-- Recent Comments Preview -->
                 <div id="comments-list-{{ post.id }}" class="mt-4 pt-3 border-t border-slate-50 space-y-2">
-                    {% for comment in post.comments.all|slice:":2" %}
+                    {% for comment in post.active_comments|slice:":2" %}
                     <div id="comment-{{ comment.id }}" class="flex items-start gap-3 text-sm py-1 group">
                         <img src="{{ comment.user.profile.avatar_url }}" class="w-7 h-7 rounded-full object-cover mt-0.5 border border-slate-200" alt="{{ comment.user.username }}">
                         <div class="flex-1 bg-slate-50 rounded-2xl px-3.5 py-2">

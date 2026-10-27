@@ -173,3 +173,34 @@ class ConnectlyViewTests(TestCase):
         self.assertEqual(response.status_code, 403)
         self.post.refresh_from_db()
         self.assertFalse(self.post.is_deleted)
+
+    def test_login_with_email(self):
+        """User can log in using their email address instead of username."""
+        response = self.client.post(reverse('login'), {
+            'username': 'shivang@example.com',
+            'password': 'Password123!'
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('home'))
+
+    def test_comment_delete_with_referer(self):
+        """Deleting a comment with HTTP_REFERER header redirects properly without TypeError."""
+        comment = Comment.objects.create(post=self.post, user=self.user2, content="Nice update")
+        self.client.login(username='rahul', password='Password123!')
+        url = reverse('comment_delete', kwargs={'pk': comment.pk})
+        referer_url = f"/post/{self.post.pk}/"
+        response = self.client.post(url, HTTP_REFERER=referer_url)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, referer_url)
+        comment.refresh_from_db()
+        self.assertTrue(comment.is_deleted)
+
+    def test_unread_notifications_property(self):
+        """Profile.unread_notifications_count returns accurate number of unread alerts."""
+        self.assertEqual(self.user1.profile.unread_notifications_count, 0)
+        Notification.objects.create(
+            recipient=self.user1,
+            sender=self.user2,
+            notification_type='follow'
+        )
+        self.assertEqual(self.user1.profile.unread_notifications_count, 1)

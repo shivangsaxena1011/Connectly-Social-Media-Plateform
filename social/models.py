@@ -38,6 +38,10 @@ class Profile(models.Model):
         full = self.user.get_full_name()
         return full if full.strip() else self.user.username
 
+    @property
+    def unread_notifications_count(self):
+        return self.user.notifications.filter(is_read=False).count()
+
 
 class Post(models.Model):
     """
@@ -72,6 +76,10 @@ class Post(models.Model):
     @property
     def comments_count(self):
         return self.comments.filter(is_deleted=False).count()
+
+    @property
+    def active_comments(self):
+        return self.comments.filter(is_deleted=False).select_related('user', 'user__profile')
 
     def is_liked_by(self, user):
         if not user or not user.is_authenticated:

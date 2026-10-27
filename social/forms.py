@@ -78,7 +78,7 @@ class UserRegistrationForm(forms.ModelForm):
 
 class UserLoginForm(AuthenticationForm):
     """
-    Styled login form.
+    Styled login form that accepts either username or email address.
     """
     username = forms.CharField(
         widget=forms.TextInput(attrs={
@@ -93,10 +93,31 @@ class UserLoginForm(AuthenticationForm):
         })
     )
 
+    def clean(self):
+        username_or_email = self.cleaned_data.get('username')
+        password = self.cleaned_data.get('password')
+
+        if username_or_email and password:
+            # Check if input is email
+            target_username = username_or_email
+            if '@' in username_or_email:
+                user_match = User.objects.filter(email__iexact=username_or_email).first()
+                if user_match:
+                    target_username = user_match.username
+
+            from django.contrib.auth import authenticate
+            self.user_cache = authenticate(self.request, username=target_username, password=password)
+            if self.user_cache is None:
+                raise self.get_invalid_login_error()
+            else:
+                self.confirm_login_allowed(self.user_cache)
+
+        return self.cleaned_data
+
 
 class UserUpdateForm(forms.ModelForm):
     """
-    Form to update standard User attributes.
+    Form to update standard User attributes with uniqueness checks.
     """
     class Meta:
         model = User
@@ -112,6 +133,12 @@ class UserUpdateForm(forms.ModelForm):
                 'class': 'w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#4648d4] text-sm'
             }),
         }
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email__iexact=email).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError("An account with this email address already exists.")
+        return email
 
 
 class ProfileUpdateForm(forms.ModelForm):
