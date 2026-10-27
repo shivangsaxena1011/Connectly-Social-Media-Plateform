@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Log In - Connectly{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="w-full max-w-md space-y-8 bg-white p-8 sm:p-10 rounded-3xl border border-slate-200 shadow-xl shadow-indigo-50/50">
+        
+        <!-- Brand Header -->
+        <div class="text-center space-y-3">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#4648d4] via-indigo-500 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-indigo-200 mx-auto">
+                <span class="material-symbols-outlined text-3xl font-bold">connect_without_contact</span>
+            </div>
+            <div>
+                <h1 class="font-heading font-extrabold text-3xl tracking-tight text-slate-900">
+                    Connect<span class="text-[#4648d4]">ly</span>
+                </h1>
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mt-1">Share · Connect · Grow</p>
+            </div>
+            <h2 class="font-heading font-bold text-xl text-slate-800 pt-2">Welcome Back</h2>
+            <p class="text-xs text-slate-500">Sign in to stay connected with your community</p>
+        </div>
+
+        <!-- Form -->
+        <form method="POST" class="mt-8 space-y-4">
+            {% csrf_token %}
+
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Username</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                <p class="text-xs text-rose-500 mt-1">{{ form.username.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Password</label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                <p class="text-xs text-rose-500 mt-1">{{ form.password.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            {% if form.non_field_errors %}
+            <div class="p-3 rounded-xl bg-rose-50 text-rose-600 text-xs font-medium border border-rose-200">
+                {{ form.non_field_errors.0 }}
+            </div>
+            {% endif %}
+
+            <div class="flex items-center justify-between text-xs pt-1">
+                <label class="flex items-center gap-2 text-slate-600 cursor-pointer">
+                    <input type="checkbox" checked class="rounded text-[#4648d4] focus:ring-[#4648d4]">
+                    <span>Remember me</span>
+                </label>
+                <a href="#" onclick="showToast('Password reset link has been dispatched to console email!', 'info'); return false;" class="font-semibold text-[#4648d4] hover:underline">Forgot password?</a>
+            </div>
+
+            <button type="submit" class="w-full py-3.5 px-4 bg-[#4648d4] hover:bg-[#3739ba] text-white rounded-full font-semibold text-sm shadow-lg shadow-indigo-100 transition duration-150 transform active:scale-95">
+                Sign In
+            </button>
+        </form>
+
+        <!-- Demo Account Shortcut Tip -->
+        <div class="p-3 rounded-2xl bg-indigo-50/60 border border-indigo-100 text-center">
+            <p class="text-xs text-indigo-900 font-medium">Demo account credentials: <span class="font-bold">shivang</span> / <span class="font-bold">connectly123</span></p>
+        </div>
+
+        <div class="text-center text-xs text-slate-500">
+            Don't have an account yet? 
+            <a href="{% url 'register' %}" class="font-bold text-[#4648d4] hover:underline">Create an account</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Connectly{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto space-y-6">
+
+    <div class="flex items-center gap-3">
+        <a href="{% url 'home' %}" class="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900 shadow-sm hover:bg-slate-50 transition">
+            <span class="material-symbols-outlined text-xl">arrow_back</span>
+        </a>
+        <h1 class="font-heading font-extrabold text-2xl text-slate-900">{{ title }}</h1>
+    </div>
+
+    <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm">
+        <form method="POST" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Content</label>
+                {{ form.content }}
+                {% if form.content.errors %}
+                <p class="text-xs text-rose-500 mt-1">{{ form.content.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            {% if post and post.image %}
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Current Image</label>
+                <div class="rounded-2xl overflow-hidden border border-slate-200 max-h-56 bg-slate-50 flex items-center justify-center">
+                    <img src="{{ post.image.url }}" alt="Post image" class="max-h-56 w-auto object-contain">
+                </div>
+            </div>
+            {% endif %}
+
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Attach or Change Image</label>
+                <input type="file" name="image" id="form-post-image" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-5 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-[#4648d4] hover:file:bg-indigo-100 cursor-pointer">
+                {% if form.image.errors %}
+                <p class="text-xs text-rose-500 mt-1">{{ form.image.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Preview -->
+            <div id="image-preview-container" class="hidden rounded-2xl overflow-hidden border border-slate-200 max-h-56 bg-slate-50 flex items-center justify-center">
+                <img id="image-preview" src="#" alt="Preview" class="max-h-56 w-auto object-contain">
+            </div>
+
+            <div class="pt-6 border-t border-slate-100 flex items-center justify-end gap-3">
+                <a href="{% url 'home' %}" class="px-6 py-2.5 rounded-full border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                    Cancel
+                </a>
+                <button type="submit" class="px-8 py-2.5 rounded-full bg-[#4648d4] hover:bg-[#3739ba] text-white text-sm font-semibold shadow-md shadow-indigo-100 transition active:scale-95">
+                    Save
+                </button>
+            </div>
+        </form>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        setupImagePreview('form-post-image', 'image-preview-container', 'image-preview');
+    });
+</script>
+{% endblock %}

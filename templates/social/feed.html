@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Feed - Connectly{% endblock %}
+
+{% block content %}
+<div class="flex flex-col lg:flex-row gap-8">
+    
+    <!-- Center Feed Timeline (max-w-2xl) -->
+    <div class="flex-1 max-w-2xl mx-auto w-full space-y-6">
+
+        <!-- Feed Navigation Tabs -->
+        <div class="bg-white/80 backdrop-blur-md sticky top-6 z-20 rounded-2xl border border-slate-200 shadow-sm p-1.5 flex items-center">
+            <a href="{% url 'home' %}?tab=for_you" class="flex-1 py-2.5 text-center font-heading font-semibold text-sm rounded-xl transition {% if feed_filter != 'following' %}bg-[#4648d4] text-white shadow-sm{% else %}text-slate-600 hover:text-slate-900{% endif %}">
+                For You
+            </a>
+            <a href="{% url 'home' %}?tab=following" class="flex-1 py-2.5 text-center font-heading font-semibold text-sm rounded-xl transition {% if feed_filter == 'following' %}bg-[#4648d4] text-white shadow-sm{% else %}text-slate-600 hover:text-slate-900{% endif %}">
+                Following
+            </a>
+        </div>
+
+        <!-- In-Timeline Post Composer -->
+        <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
+            <form action="{% url 'post_create' %}" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="flex items-start gap-4">
+                    <img src="{{ user.profile.avatar_url }}" alt="{{ user.username }}" class="w-11 h-11 rounded-full object-cover border border-slate-200">
+                    <div class="flex-1">
+                        <textarea name="content" rows="3" required class="w-full bg-transparent border-0 focus:ring-0 text-slate-800 placeholder-slate-400 text-sm resize-none focus:outline-none" placeholder="What's happening, {{ user.first_name|default:user.username }}?"></textarea>
+
+                        <!-- Attached Image Preview -->
+                        <div id="feed-image-preview-container" class="hidden relative mt-2 mb-3 rounded-2xl overflow-hidden border border-slate-200 max-h-64 bg-slate-100 flex items-center justify-center">
+                            <img id="feed-image-preview" src="#" alt="Preview" class="max-h-64 w-auto object-contain">
+                            <button type="button" onclick="removePreview('feed-image-input', 'feed-image-preview-container')" class="absolute top-2 right-2 w-7 h-7 rounded-full bg-slate-900/70 text-white flex items-center justify-center hover:bg-slate-900 transition">
+                                <span class="material-symbols-outlined text-sm">close</span>
+                            </button>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-3 border-t border-slate-100 mt-2">
+                            <div class="flex items-center gap-1">
+                                <label class="p-2 text-slate-500 hover:text-[#4648d4] hover:bg-indigo-50 rounded-xl cursor-pointer transition flex items-center gap-1.5 text-xs font-semibold">
+                                    <span class="material-symbols-outlined text-xl text-[#4648d4]">image</span>
+                                    <span>Photo</span>
+                                    <input type="file" name="image" id="feed-image-input" accept="image/*" class="hidden">
+                                </label>
+                                <button type="button" onclick="showToast('Poll feature coming soon!', 'info')" class="p-2 text-slate-500 hover:text-[#4648d4] hover:bg-indigo-50 rounded-xl transition flex items-center gap-1.5 text-xs font-semibold">
+                                    <span class="material-symbols-outlined text-xl text-pink-500">poll</span>
+                                    <span>Poll</span>
+                                </button>
+                                <button type="button" onclick="showToast('Emojis available via system keyboard', 'info')" class="p-2 text-slate-500 hover:text-[#4648d4] hover:bg-indigo-50 rounded-xl transition flex items-center gap-1.5 text-xs font-semibold">
+                                    <span class="material-symbols-outlined text-xl text-amber-500">sentiment_satisfied</span>
+                                    <span>Feeling</span>
+                                </button>
+                            </div>
+
+                            <button type="submit" class="px-6 py-2 bg-[#4648d4] hover:bg-[#3739ba] text-white rounded-full text-sm font-semibold shadow-md shadow-indigo-100 transition transform active:scale-95">
+                                Post
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Posts List -->
+        {% if page_obj %}
+            {% for post in page_obj %}
+            <article class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm card-hover transition duration-200">
+                <!-- Post Header -->
+                <div class="flex items-center justify-between mb-4">
+                    <a href="{% url 'profile' username=post.user.username %}" class="flex items-center gap-3 group">
+                        <img src="{{ post.user.profile.avatar_url }}" alt="{{ post.user.username }}" class="w-11 h-11 rounded-full object-cover border border-slate-200 group-hover:ring-2 group-hover:ring-[#4648d4] transition">
+                        <div>
+                            <div class="font-heading font-bold text-slate-900 group-hover:text-[#4648d4] transition leading-tight flex items-center gap-1.5">
+                                <span>{{ post.user.profile.display_name }}</span>
+                                {% if post.user.is_superuser %}
+                                <span class="material-symbols-outlined text-base text-[#4648d4]" title="Verified">verified</span>
+                                {% endif %}
+                            </div>
+                            <div class="text-xs text-slate-400">@{{ post.user.username }} · {{ post.created_at|naturaltime }}</div>
+                        </div>
+                    </a>
+
+                    <!-- Post Actions Menu -->
+                    <div class="relative">
+                        {% if post.user == user %}
+                        <div class="flex items-center gap-1">
+                            <a href="{% url 'post_edit' pk=post.pk %}" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-xl transition" title="Edit Post">
+                                <span class="material-symbols-outlined text-lg">edit</span>
+                            </a>
+                            <form action="{% url 'post_delete' pk=post.pk %}" method="POST" onsubmit="return confirm('Are you sure you want to delete this post?');" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition" title="Delete Post">
+                                    <span class="material-symbols-outlined text-lg">delete</span>
+                                </button>
+                            </form>
+                        </div>
+                        {% else %}
+                        <button type="button" onclick="navigator.clipboard.writeText(window.location.origin + '{% url 'post_detail' pk=post.pk %}'); showToast('Link copied to clipboard!');" class="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition" title="Share link">
+                            <span class="material-symbols-outlined text-lg">share</span>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Post Text Content -->
+                <p class="text-slate-800 text-[15px] leading-relaxed mb-4 whitespace-pre-line">{{ post.content }}</p>
+
+                <!-- Post Attached Image -->
+                {% if post.image %}
+                <div class="mb-4 rounded-2xl overflow-hidden border border-slate-100 bg-slate-50">
+                    <a href="{% url 'post_detail' pk=post.pk %}">
+                        <img src="{{ post.image.url }}" alt="Post image" class="w-full max-h-[460px] object-cover hover:opacity-95 transition">
+                    </a>
+                </div>
+                {% endif %}
+
+                <!-- Action Bar (Likes, Comments, Share) -->
+                <div class="flex items-center justify-between pt-3 border-t border-slate-100">
+                    <div class="flex items-center gap-6">
+                        <!-- Like Button -->
+                        <button type="button" onclick="toggleLike({{ post.id }}, this)" class="like-btn flex items-center gap-2 text-sm font-semibold transition group">
+                            <span class="like-icon material-symbols-outlined text-xl transition {% if post.likes.all|length > 0 %}{% for l in post.likes.all %}{% if l.user == user %}text-rose-500{% endif %}{% endfor %}{% else %}text-slate-500 group-hover:text-rose-500{% endif %}"
+                                  style="{% for l in post.likes.all %}{% if l.user == user %}font-variation-settings: 'FILL' 1;{% endif %}{% endfor %}">favorite</span>
+                            <span class="like-count text-slate-600 group-hover:text-slate-900">{{ post.likes_count }}</span>
+                        </button>
+
+                        <!-- Comment Toggle Button -->
+                        <a href="{% url 'post_detail' pk=post.pk %}" class="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-[#4648d4] transition group">
+                            <span class="material-symbols-outlined text-xl group-hover:scale-110 transition">chat_bubble</span>
+                            <span class="post-comments-count-{{ post.id }} text-slate-600 group-hover:text-slate-900">{{ post.comments_count }}</span>
+                        </a>
+
+                        <!-- Share Button -->
+                        <button type="button" onclick="navigator.clipboard.writeText(window.location.origin + '{% url 'post_detail' pk=post.pk %}'); showToast('Post link copied to clipboard!');" class="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-emerald-600 transition group">
+                            <span class="material-symbols-outlined text-xl group-hover:scale-110 transition">ios_share</span>
+                        </button>
+                    </div>
+
+                    <a href="{% url 'post_detail' pk=post.pk %}" class="text-xs font-semibold text-slate-400 hover:text-[#4648d4] transition">
+                        View Thread →
+                    </a>
+                </div>
+
+                <!-- Recent Comments Preview -->
+                <div id="comments-list-{{ post.id }}" class="mt-4 pt-3 border-t border-slate-50 space-y-2">
+                    {% for comment in post.comments.all|slice:":2" %}
+                    <div id="comment-{{ comment.id }}" class="flex items-start gap-3 text-sm py-1 group">
+                        <img src="{{ comment.user.profile.avatar_url }}" class="w-7 h-7 rounded-full object-cover mt-0.5 border border-slate-200" alt="{{ comment.user.username }}">
+                        <div class="flex-1 bg-slate-50 rounded-2xl px-3.5 py-2">
+                            <div class="flex items-center justify-between">
+                                <span class="font-semibold text-slate-900">{{ comment.user.profile.display_name }}</span>
+                                <span class="text-[11px] text-slate-400">{{ comment.created_at|naturaltime }}</span>
+                            </div>
+                            <p class="text-slate-700 mt-0.5">{{ comment.content }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Inline Quick Comment Form -->
+                <form onsubmit="submitComment(event, {{ post.id }})" class="mt-3 flex items-center gap-2">
+                    <img src="{{ user.profile.avatar_url }}" class="w-8 h-8 rounded-full object-cover border border-slate-200" alt="{{ user.username }}">
+                    <div class="relative flex-1">
+                        <input type="text" name="content" required placeholder="Write a comment..." autocomplete="off" class="w-full bg-slate-50 hover:bg-slate-100 focus:bg-white border border-slate-200 rounded-full px-4 py-2 text-xs text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-[#4648d4] focus:outline-none transition">
+                        <button type="submit" class="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-[#4648d4] text-white flex items-center justify-center hover:bg-indigo-700 transition">
+                            <span class="material-symbols-outlined text-sm">send</span>
+                        </button>
+                    </div>
+                </form>
+            </article>
+            {% endfor %}
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <div class="flex justify-center gap-2 py-4">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&tab={{ feed_filter }}" class="px-4 py-2 bg-white rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">Previous</a>
+                {% endif %}
+                <span class="px-4 py-2 text-sm font-medium text-slate-500">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&tab={{ feed_filter }}" class="px-4 py-2 bg-white rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">Next</a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+        {% else %}
+        <!-- Empty State -->
+        <div class="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-sm">
+            <div class="w-16 h-16 rounded-full bg-indigo-50 text-[#4648d4] mx-auto flex items-center justify-center mb-4">
+                <span class="material-symbols-outlined text-3xl">dynamic_feed</span>
+            </div>
+            <h3 class="font-heading font-bold text-xl text-slate-900 mb-1">No posts to display</h3>
+            <p class="text-sm text-slate-500 max-w-sm mx-auto mb-6">
+                {% if feed_filter == 'following' %}
+                You are not following anyone yet or they haven't posted. Check out who to follow or view the "For You" feed!
+                {% else %}
+                Be the first to share an update with the Connectly community!
+                {% endif %}
+            </p>
+            <button onclick="openPostModal()" class="px-6 py-2.5 bg-[#4648d4] hover:bg-[#3739ba] text-white rounded-full text-sm font-semibold shadow-md transition">
+                Create First Post
+            </button>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Right Auxiliary Panel (Desktop > lg) -->
+    <aside class="hidden lg:flex flex-col w-80 shrink-0 space-y-6">
+        
+        <!-- Search Bar -->
+        <form action="{% url 'search' %}" method="GET" class="relative">
+            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl">search</span>
+            <input type="text" name="q" placeholder="Search Connectly..." class="w-full bg-white border border-slate-200 rounded-full pl-11 pr-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4648d4] shadow-sm transition">
+        </form>
+
+        <!-- Suggested Users (Who to follow) -->
+        {% if suggested_users %}
+        <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="font-heading font-bold text-base text-slate-900">Who to follow</h3>
+                <a href="{% url 'explore' %}" class="text-xs font-semibold text-[#4648d4] hover:underline">View all</a>
+            </div>
+
+            <div class="space-y-3.5">
+                {% for u in suggested_users %}
+                <div class="flex items-center justify-between gap-3">
+                    <a href="{% url 'profile' username=u.username %}" class="flex items-center gap-3 overflow-hidden group">
+                        <img src="{{ u.profile.avatar_url }}" alt="{{ u.username }}" class="w-9 h-9 rounded-full object-cover border border-slate-200 group-hover:ring-2 group-hover:ring-[#4648d4] transition">
+                        <div class="truncate">
+                            <div class="text-sm font-bold text-slate-900 group-hover:text-[#4648d4] truncate transition">{{ u.profile.display_name }}</div>
+                            <div class="text-xs text-slate-400 truncate">@{{ u.username }}</div>
+                        </div>
+                    </a>
+                    <button type="button" onclick="toggleFollow('{{ u.username }}', this)" class="px-4 py-1.5 rounded-full text-xs font-semibold bg-[#4648d4] hover:bg-indigo-700 text-white transition active:scale-95 shadow-sm">
+                        <span class="follow-text">Follow</span>
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Trending Topics -->
+        <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-4">
+            <h3 class="font-heading font-bold text-base text-slate-900">Trending Topics</h3>
+            <div class="space-y-3">
+                {% for topic in trending_topics %}
+                <a href="{% url 'search' %}?q={{ topic.tag|urlencode }}" class="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 transition group">
+                    <div>
+                        <div class="text-sm font-bold text-slate-800 group-hover:text-[#4648d4] transition">{{ topic.tag }}</div>
+                        <div class="text-xs text-slate-400">{{ topic.posts_count }} posts</div>
+                    </div>
+                    <span class="material-symbols-outlined text-slate-300 group-hover:text-[#4648d4] text-lg">arrow_forward</span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Platform Footer -->
+        <div class="text-xs text-slate-400 px-4 space-y-2">
+            <div class="flex flex-wrap gap-x-3 gap-y-1">
+                <a href="#" class="hover:underline">About</a>
+                <a href="#" class="hover:underline">Privacy</a>
+                <a href="#" class="hover:underline">Terms</a>
+                <a href="#" class="hover:underline">Roadmap</a>
+                <a href="#" class="hover:underline">API</a>
+            </div>
+            <p>© 2026 Connectly Platform. All rights reserved.</p>
+        </div>
+
+    </aside>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        setupImagePreview('feed-image-input', 'feed-image-preview-container', 'feed-image-preview');
+    });
+</script>
+{% endblock %}

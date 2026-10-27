@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Notifications - Connectly{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="font-heading font-extrabold text-2xl text-slate-900">Notifications</h1>
+            <p class="text-sm text-slate-500">Keep up with who is interacting with you and your posts.</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm divide-y divide-slate-100">
+        {% if notifications %}
+            {% for n in notifications %}
+            <div class="py-4 first:pt-0 last:pb-0 flex items-start gap-4">
+                <!-- Notification Type Badge -->
+                <div class="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 {% if n.notification_type == 'like' %}bg-rose-50 text-rose-500{% elif n.notification_type == 'comment' %}bg-indigo-50 text-[#4648d4]{% else %}bg-emerald-50 text-emerald-600{% endif %}">
+                    <span class="material-symbols-outlined text-xl">
+                        {% if n.notification_type == 'like' %}favorite{% elif n.notification_type == 'comment' %}chat_bubble{% else %}person_add{% endif %}
+                    </span>
+                </div>
+
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-1">
+                        <a href="{% url 'profile' username=n.sender.username %}">
+                            <img src="{{ n.sender.profile.avatar_url }}" alt="{{ n.sender.username }}" class="w-6 h-6 rounded-full object-cover border border-slate-200 inline">
+                        </a>
+                        <span class="text-sm text-slate-800">
+                            <a href="{% url 'profile' username=n.sender.username %}" class="font-bold hover:text-[#4648d4] transition">
+                                {{ n.sender.profile.display_name }}
+                            </a>
+                            {% if n.notification_type == 'like' %}
+                            liked your post
+                            {% elif n.notification_type == 'comment' %}
+                            commented on your post
+                            {% elif n.notification_type == 'follow' %}
+                            started following you
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    {% if n.post %}
+                    <a href="{% url 'post_detail' pk=n.post.pk %}" class="block bg-slate-50 rounded-xl p-3 text-xs text-slate-600 hover:bg-slate-100 transition mt-2">
+                        "{{ n.post.content|truncatechars:100 }}"
+                    </a>
+                    {% endif %}
+
+                    <div class="text-[11px] text-slate-400 mt-1.5">{{ n.created_at|naturaltime }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="text-center py-16">
+            <div class="w-16 h-16 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center mb-3">
+                <span class="material-symbols-outlined text-3xl">notifications_none</span>
+            </div>
+            <h3 class="font-heading font-bold text-lg text-slate-900 mb-1">No notifications yet</h3>
+            <p class="text-xs text-slate-500 max-w-xs mx-auto">When people like your posts, leave comments, or follow you, you'll see them right here.</p>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

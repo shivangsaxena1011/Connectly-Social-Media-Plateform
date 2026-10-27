@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ list_type }} - @{{ profile_user.username }}{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto space-y-6">
+
+    <div class="flex items-center gap-3">
+        <a href="{% url 'profile' username=profile_user.username %}" class="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900 shadow-sm hover:bg-slate-50 transition">
+            <span class="material-symbols-outlined text-xl">arrow_back</span>
+        </a>
+        <div>
+            <h1 class="font-heading font-extrabold text-xl text-slate-900">{{ list_type }}</h1>
+            <p class="text-xs text-slate-400">@{{ profile_user.username }}</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm divide-y divide-slate-100">
+        {% if users_list %}
+            {% for u in users_list %}
+            <div class="py-4 first:pt-0 last:pb-0 flex items-center justify-between gap-3">
+                <a href="{% url 'profile' username=u.username %}" class="flex items-center gap-3 overflow-hidden group">
+                    <img src="{{ u.profile.avatar_url }}" alt="{{ u.username }}" class="w-12 h-12 rounded-full object-cover border border-slate-200 group-hover:ring-2 group-hover:ring-[#4648d4] transition">
+                    <div class="truncate">
+                        <div class="font-heading font-bold text-slate-900 text-sm group-hover:text-[#4648d4] truncate transition">{{ u.profile.display_name }}</div>
+                        <div class="text-xs text-slate-400 truncate">@{{ u.username }}</div>
+                        {% if u.profile.bio %}
+                        <p class="text-xs text-slate-500 truncate mt-0.5 max-w-xs">{{ u.profile.bio }}</p>
+                        {% endif %}
+                    </div>
+                </a>
+
+                {% if u != user %}
+                <button type="button" onclick="toggleFollow('{{ u.username }}', this)" class="px-5 py-1.5 rounded-full text-xs font-semibold transition active:scale-95 shadow-sm {% if u.id in my_following %}bg-slate-100 text-slate-700 hover:bg-slate-200{% else %}bg-[#4648d4] text-white hover:bg-indigo-700{% endif %}">
+                    <span class="follow-text">{% if u.id in my_following %}Following{% else %}Follow{% endif %}</span>
+                </button>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="text-center py-12 text-slate-400 text-sm">
+            No {{ list_type|lower }} to show.
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}
